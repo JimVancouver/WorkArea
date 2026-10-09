@@ -110,24 +110,67 @@ const PAGES: Record<string, Page> = {
 
   about: {
     title: "About",
-    description: "Why ReadAloud exists, how it works, and who makes it.",
+    description: "Two readers, one letter: the story of why ReadAloud exists.",
     body: (
       <article className="doc">
-        <h1>Reading should never be the hard part.</h1>
-        <p className="lede">
-          ReadAloud turns any page into something you can hear, follow and understand.
+        <h1>Two readers, one letter.</h1>
+        <p className="lede">A short story about why ReadAloud exists.</p>
+
+        <div
+          style={{
+            fontFamily: "var(--font-read), var(--font-ui), sans-serif",
+            fontSize: "clamp(1.2rem, 1.9vw, 1.35rem)",
+            lineHeight: 1.75,
+            marginTop: "2.25rem",
+            paddingLeft: "1.5rem",
+            borderLeft: "5px solid var(--marker)",
+          }}
+        >
+          <p style={{ color: "var(--ink)" }}>
+            Every Tuesday, a letter arrives for Rosa. It comes from her grandmother, who lives two hours away and still
+            believes the best things are written by hand.
+          </p>
+          <p style={{ color: "var(--ink)" }}>
+            Rosa is seven. She knows her letters and a good number of her words, but Grandma's handwriting loops and
+            leans, and the long words hide inside it. So the letter waits on the kitchen table until a grown-up has
+            time. Some weeks, that's Thursday.
+          </p>
+          <p style={{ color: "var(--ink)" }}>
+            Two hours away, Grandma has her own pile on the table. The print on her pill bottles seems to shrink every
+            year. The bank sends letters full of words like <em>adjustment</em> and <em>effective immediately</em>. She
+            keeps her glasses on a chain now, and still she holds the page at arm's length and guesses.
+          </p>
+          <p style={{ color: "var(--ink)" }}>
+            Both of them love to read. Both of them are waiting for someone to read to them.
+          </p>
+          <p style={{ color: "var(--ink)" }}>
+            One Tuesday, Rosa holds the letter up to the phone. A voice begins: <em>Dear Rosa, the tomatoes came in
+            early this year.</em> The words light up one at a time, and she follows them with her finger. When it gets
+            to the dog who steals a tomato every morning, she laughs out loud, then reads that line again by herself.
+            Then once more, just to be sure.
+          </p>
+          <p style={{ color: "var(--ink)" }}>
+            That evening, Grandma does the same with the letter from the bank. In two minutes she knows what it says,
+            and that there's nothing to worry about. She puts the kettle on, and starts writing to Rosa.
+          </p>
+          <p style={{ color: "var(--ink)" }}>
+            Nobody had to hurry home. The letters were always theirs. They just needed a voice.
+          </p>
+        </div>
+        <p style={{ fontSize: "0.95rem", fontStyle: "italic" }}>
+          Rosa and her grandmother are characters in a story. The kitchen tables are real, in homes everywhere.
         </p>
 
-        <h2>Why we built it</h2>
+        <h2>Why we built ReadAloud</h2>
         <p>
-          A child sounding out their first book. A grandparent squinting at a letter from the bank. A parent trying to
-          make sense of a school form at the end of a long day. In each case the words are there, but they're hard to
-          reach.
+          Somewhere right now, someone is waiting for a page to be read to them: a child who is nearly there, a parent
+          at the end of a long day, a grandparent whose eyes have changed. The words are right in front of them, just
+          out of reach.
         </p>
         <p>
-          ReadAloud takes a photo of the page, reads it out loud and highlights each word as it goes, so you can follow
-          along. It explains hard words in plain language, and for young readers it writes short stories at just the
-          right level.
+          We built ReadAloud so nobody has to wait. Point your phone at a page and hear it, word by word, at your own
+          pace, with the hard words explained in plain language. For young readers, it can also write a story at just
+          the right level, so the next page feels a little easier than the last.
         </p>
 
         <h2>How it works</h2>
@@ -141,16 +184,13 @@ const PAGES: Record<string, Page> = {
           sender.
         </p>
 
-        <h2>Who makes it</h2>
+        <h2>Who we are</h2>
         <p>
-          ReadAloud is made by Synapse Academic Press, an independent educational publisher in British Columbia,
-          Canada. We make study guides, puzzle books and learning tools for readers of every age.
+          ReadAloud is made by Read Aloud SI Ltd. We're building it one reader at a time.
         </p>
-
-        <h2>Get in touch</h2>
         <p>
-          Ideas, bugs or a story about how you use ReadAloud: write to <a href={`mailto:${MAIL}`}>{MAIL}</a>. We read
-          every message.
+          If ReadAloud has helped someone you love read something that mattered, we'd love to hear about it. Write to{" "}
+          <a href={`mailto:${MAIL}`}>{MAIL}</a>. We read every message.
         </p>
       </article>
     ),
@@ -244,7 +284,7 @@ const PAGES: Record<string, Page> = {
 
         <h2>Liability</h2>
         <p>
-          To the extent the law allows, Synapse Academic Press is not liable for losses that come from using
+          To the extent the law allows, Read Aloud SI Ltd. is not liable for losses that come from using
           ReadAloud or relying on its output.
         </p>
 

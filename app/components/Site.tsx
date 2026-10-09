@@ -52,7 +52,7 @@ export function SiteFooter() {
         ReadAloud uses Claude by Anthropic to read and explain text, and your device's own voice to speak it. Photos and
         text aren't stored by ReadAloud.
       </p>
-      <p className="fine">© {new Date().getFullYear()} Synapse Academic Press</p>
+      <p className="fine">© {new Date().getFullYear()} Read Aloud SI Ltd.</p>
     </footer>
   );
 }
