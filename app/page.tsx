@@ -1,5 +1,7 @@
 import ReadAlong from "./components/ReadAlong";
 import Studio from "./components/Studio";
+import { SiteFooter, SiteHeader } from "./components/Site";
+import { GrownupsIllustration, KidsIllustration } from "./components/Illustrations";
 
 const SAMPLE =
   "Dear Rosa, the tomatoes came in early this year. The dog still steals one every morning and looks very pleased with himself. Come and visit soon. Love, Grandma.";
@@ -8,17 +10,7 @@ export default function Home() {
   return (
     <>
       <a className="skip" href="#try">Skip to the reader</a>
-      <header className="top">
-        <a href="/" className="mark" aria-label="ReadAloud home">
-          <svg viewBox="0 0 32 32" aria-hidden width="28" height="28">
-            <rect x="3" y="6" width="17" height="20" rx="2" fill="#FFE14D" stroke="currentColor" strokeWidth="2" />
-            <path d="M7 12h9M7 16h9M7 20h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            <path d="M24 11c2 1.6 2 8.4 0 10M27.5 8c3.4 3 3.4 13 0 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-          ReadAloud
-        </a>
-        <a className="toplink" href="mailto:contact@readaloud.si">Contact</a>
-      </header>
+      <SiteHeader />
 
       <main>
         <section className="hero">
@@ -46,12 +38,66 @@ export default function Home() {
           </figure>
         </section>
 
+        <section className="why" aria-labelledby="why-title">
+          <h2 id="why-title">Reading is hard for more people than you'd think.</h2>
+          <div className="why-grid">
+            <figure>
+              <p className="why-num">40%</p>
+              <figcaption>
+                of US fourth graders read below the basic level for their grade.
+                <a href="https://www.nationsreportcard.gov/reports/reading/2024/g4_8/national-trends" rel="noopener">
+                  NAEP, 2024
+                </a>
+              </figcaption>
+            </figure>
+            <figure>
+              <p className="why-num">826 million</p>
+              <figcaption>
+                people worldwide struggle to see things up close because of age-related long-sightedness.
+                <a href="https://www.who.int/news-room/fact-sheets/detail/blindness-and-visual-impairment" rel="noopener">
+                  World Health Organization
+                </a>
+              </figcaption>
+            </figure>
+            <figure>
+              <p className="why-num">1.4 million</p>
+              <figcaption>
+                more words heard by kindergarten when children are read five books a day, compared with children who
+                aren't read to.
+                <a href="https://news.osu.edu/a-million-word-gap-for-children-who-arent-read-to-at-home/" rel="noopener">
+                  Ohio State University, 2019
+                </a>
+              </figcaption>
+            </figure>
+          </div>
+          <div className="uses">
+            <h3>What people read with ReadAloud</h3>
+            <ul>
+              {[
+                "Picture books",
+                "Homework sheets",
+                "Letters from the bank",
+                "Medicine labels",
+                "School forms",
+                "Recipes",
+                "Restaurant menus",
+                "Instructions",
+                "Bills",
+                "Notes from the doctor",
+              ].map((u) => (
+                <li key={u}>{u}</li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
         <Studio />
 
         <section className="who" aria-labelledby="who-title">
           <h2 id="who-title">Who it's for</h2>
           <div className="who-grid">
             <div>
+              <KidsIllustration />
               <h3>Children learning to read</h3>
               <p>
                 The highlight moves word by word, so a child can follow along and join in. Tap a word to hear it again.
@@ -59,6 +105,7 @@ export default function Home() {
               </p>
             </div>
             <div>
+              <GrownupsIllustration />
               <h3>Grown-ups who find small print hard</h3>
               <p>
                 Letters, bills, menus, instructions and the back of a medicine box. Hear the words, then hear what they
@@ -68,7 +115,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="how" aria-labelledby="how-title">
+        <section className="how" id="how" aria-labelledby="how-title">
           <h2 id="how-title">How it works</h2>
           <ol>
             <li>
@@ -87,15 +134,7 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="foot">
-        <p>
-          Questions or ideas? Write to <a href="mailto:contact@readaloud.si">contact@readaloud.si</a>.
-        </p>
-        <p className="fine">
-          ReadAloud uses Claude by Anthropic to read and explain text, and your device's own voice to speak it. Photos
-          and text aren't stored.
-        </p>
-      </footer>
+      <SiteFooter />
     </>
   );
 }
