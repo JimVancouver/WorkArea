@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Animal cell — interactive 3D demo</title>
+<style>
+@font-face{font-family:Barlow;src:url(fonts/barlow-condensed-latin-500-normal.woff2);font-weight:500}
+@font-face{font-family:Barlow;src:url(fonts/barlow-condensed-latin-700-normal.woff2);font-weight:700}
+@font-face{font-family:Barlow;src:url(fonts/barlow-condensed-latin-400-normal.woff2);font-weight:400}
+@font-face{font-family:Plex;src:url(fonts/ibm-plex-mono-latin-400-normal.woff2);font-weight:400}
+@font-face{font-family:Plex;src:url(fonts/ibm-plex-mono-latin-600-normal.woff2);font-weight:600}
+:root{
+  --abyss:#030914; --ink:#e8f6ff; --dim:#7f9bb3; --ice:#7fe3ff; --cyan:#33c9f0;
+  --violet:#b56cff; --amber:#ffb347; --lime:#b8f060; --rose:#ff6fa8;
+  --glass:rgba(10,28,48,.62); --edge:rgba(120,210,255,.28);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:#01050c;height:100%;overflow:hidden}
+body{width:1080px;height:1350px;position:absolute;left:50%;top:50%;transform-origin:center;transform:translate(-50%,-50%) scale(var(--k,1));overflow:hidden;background:var(--abyss);color:var(--ink);font-family:Barlow,sans-serif;border-radius:12px}
+#gl,#fx{position:absolute;inset:0;width:1080px;height:1350px}
+#fx{pointer-events:none}
+.panel{position:absolute;left:28px;right:28px;background:var(--glass);border:1px solid var(--edge);border-radius:18px;
+  box-shadow:inset 0 1px 0 rgba(180,235,255,.18),0 0 40px rgba(40,160,255,.10);backdrop-filter:blur(14px)}
+#top{top:28px;height:214px;display:grid;grid-template-columns:330px 1fr 300px;gap:22px;padding:20px 24px}
+#bot{bottom:28px;height:262px;display:grid;grid-template-columns:200px 250px 1fr 210px;gap:18px;padding:18px 22px}
+.k{font:600 11px Plex,monospace;letter-spacing:.08em;color:var(--dim);text-transform:uppercase}
+.live{color:var(--lime)} .live::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--lime);margin:0 5px 1px 0;box-shadow:0 0 8px var(--lime)}
+.row{display:flex;justify-content:space-between;align-items:baseline}
+.kicker{font:600 11px Plex,monospace;color:var(--amber);letter-spacing:.06em}
+h1{font:700 64px/0.9 Barlow;letter-spacing:.01em;color:#dff7ff;text-shadow:0 0 18px rgba(80,200,255,.75),0 0 2px #fff;margin-top:8px}
+.sub{font:400 15px Barlow;color:var(--dim);margin-top:8px;letter-spacing:.04em}
+.tbl{margin-top:10px;font:400 12px Plex,monospace;line-height:1.75}
+.tbl .row span:last-child{color:var(--ink)} .tbl .row span:first-child{color:var(--dim)}
+.big{font:700 46px/1 Barlow;color:#fff}
+.unit{font:400 13px Plex,monospace;color:var(--ice);margin-left:8px}
+canvas.spark{display:block;width:100%}
+.bars .row{font:400 12px Plex,monospace;color:var(--dim);margin:5px 0;align-items:center}
+.bar{flex:1;height:7px;margin:0 8px;border-radius:4px;background:rgba(255,255,255,.07);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:4px}
+.focusname{font:700 30px/1 Barlow;color:var(--ice);margin-top:6px;letter-spacing:.02em}
+.mag{font:700 44px/1 Barlow;color:#fff;margin-top:8px}
+.desc{font:400 12px/1.55 Plex,monospace;color:#a9c3d6;margin-top:8px}
+.log{font:400 11px/1.6 Plex,monospace;color:#8fb1c9;margin-top:6px;height:110px;overflow:hidden}
+.log div:first-child{color:var(--ice)}
+#nick{position:absolute;right:40px;bottom:304px;font:500 15px Barlow;color:rgba(255,255,255,.55);letter-spacing:.04em}
+#viewtag{position:absolute;left:44px;top:268px;font:600 11px Plex,monospace;color:var(--ice);letter-spacing:.08em}
+#mini{width:176px;height:150px;margin-top:6px}
+
+#ctl{position:absolute;left:40px;right:40px;top:944px;display:flex;flex-direction:column;gap:10px;z-index:5}
+#ctl .line{display:flex;align-items:center;gap:12px}
+#ctl button{font:600 13px Plex,monospace;color:var(--ink);background:rgba(8,26,46,.78);border:1px solid var(--edge);border-radius:999px;padding:7px 13px;cursor:pointer}
+#ctl button:hover{border-color:var(--ice);color:#fff}
+#ctl button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+#ctl button.on{background:rgba(51,201,240,.28);border-color:var(--ice);color:#fff}
+#play{width:44px;height:44px;padding:0!important;font-size:18px!important}
+#scrub{flex:1;accent-color:#7fe3ff;height:4px}
+#clock{font:600 13px Plex,monospace;color:var(--ice);width:64px;text-align:right}
+#stops{flex-wrap:wrap}
+#fx{z-index:1}
+</style>
+</head>
+<body>
+<canvas id="gl" width="1080" height="1350"></canvas>
+<canvas id="fx" width="1080" height="1350"></canvas>
+
+<div id="top" class="panel">
+  <div>
+    <div class="kicker">Eukaryotic unit of life</div>
+    <h1>ANIMAL<br>CELL</h1>
+    <div class="sub">Live structure tour, rendered in 3D</div>
+  </div>
+  <div>
+    <div class="row"><span class="k">Cell profile</span><span class="k live">live</span></div>
+    <div class="tbl">
+      <div class="row"><span>Type</span><span>eukaryotic, animal</span></div>
+      <div class="row"><span>Diameter</span><span>10–30 µm</span></div>
+      <div class="row"><span>Organelles</span><span>membrane-bound</span></div>
+      <div class="row"><span>Protein species</span><span id="prot">~10 000</span></div>
+      <div class="row"><span>Membrane potential</span><span id="vm">−70 mV</span></div>
+    </div>
+  </div>
+  <div>
+    <div class="row"><span class="k">ATP turnover</span><span class="k live">per cell</span></div>
+    <div style="margin-top:10px"><span class="big" id="atp">1.06</span><span class="unit">× 10⁹ ATP/s</span></div>
+    <canvas class="spark" id="spark" width="252" height="70" style="margin-top:8px"></canvas>
+    <div class="k" style="margin-top:4px;text-transform:none;letter-spacing:0">glucose → pyruvate → TCA → ETC → ATP</div>
+  </div>
+</div>
+
+<div id="viewtag">● LIVE 3D · <span id="viewname">OVERVIEW</span></div>
+<div id="nick">@yourhandle</div>
+
+<div id="bot" class="panel">
+  <div>
+    <div class="row"><span class="k">Locator</span><span class="k live">live</span></div>
+    <canvas id="mini" width="176" height="150"></canvas>
+    <div class="k" style="margin-top:4px;text-transform:none" id="seq">whole cell</div>
+  </div>
+  <div class="bars">
+    <div class="row"><span class="k">Organelle activity</span><span class="k live">live</span></div>
+    <div id="bars" style="margin-top:8px"></div>
+  </div>
+  <div>
+    <div class="row"><span class="k">Focus</span><span class="k" id="zoomk">zoom</span></div>
+    <div class="mag" id="mag">×1 300</div>
+    <div class="focusname" id="fname">WHOLE CELL</div>
+    <div class="desc" id="fdesc"></div>
+    <canvas id="scale" width="300" height="34" style="margin-top:6px"></canvas>
+  </div>
+  <div>
+    <div class="row"><span class="k">Cell vitals</span><span class="k live">live</span></div>
+    <div class="tbl" id="vitals" style="margin-top:6px"></div>
+    <div class="k" style="margin-top:6px">Event log</div>
+    <div class="log" id="log"></div>
+  </div>
+</div>
+
+<div id="ctl">
+  <div class="line" id="stops"></div>
+  <div class="line"><button id="play" aria-label="Pause">❚❚</button><input id="scrub" type="range" min="0" max="30" step="0.01" value="0" aria-label="Timeline"><span id="clock">00.0 s</span></div>
+</div>
+<script type="importmap">{"imports":{"three":"./lib/three.module.js","three/addons/":"./lib/addons/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import {EffectComposer} from 'three/addons/postprocessing/EffectComposer.js';
+import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
+import {UnrealBloomPass} from 'three/addons/postprocessing/UnrealBloomPass.js';
+import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
+
+const LOOP = 30, W = 1080, H = 1350, TAU = Math.PI*2;
+// ---------- deterministic helpers ----------
+let seed = 7;
+const rnd = () => (seed = (seed*16807) % 2147483647, (seed-1)/2147483646);
+const R = (a,b) => a + (b-a)*rnd();
+const smooth = x => { x = Math.min(1,Math.max(0,x)); return x*x*(3-2*x); };
+const lp = (a,b,k) => a+(b-a)*k;
+// periodic wave with integer frequency over the loop
+const wave = (t,f,ph=0) => Math.sin(TAU*f*t/LOOP + ph);
+
+// ---------- renderer ----------
+const renderer = new THREE.WebGLRenderer({canvas:document.getElementById('gl'), antialias:true, preserveDrawingBuffer:true});
+renderer.setPixelRatio(1); renderer.setSize(W,H,false);
+renderer.localClippingEnabled = true;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.15;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x030914);
+scene.fog = new THREE.FogExp2(0x030914, 0.035);
+const camera = new THREE.PerspectiveCamera(32, W/H, 0.01, 200);
+
+scene.add(new THREE.HemisphereLight(0x9fdcff, 0x1a0830, 1.1));
+const key = new THREE.DirectionalLight(0xffffff, 2.6); key.position.set(3,4,5); scene.add(key);
+const rim = new THREE.DirectionalLight(0x55b8ff, 2.2); rim.position.set(-5,1,-4); scene.add(rim);
+const fill = new THREE.PointLight(0xff9a5a, 6, 6); fill.position.set(0.6,-0.4,1.2);
+
+// ---------- textures ----------
+function canvasTex(w,h,draw){const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t;}
+const blobTex = canvasTex(256,256,(g,w)=>{const gr=g.createRadialGradient(w/2,w/2,0,w/2,w/2,w/2);gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(.35,'rgba(255,255,255,.45)');gr.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=gr;g.fillRect(0,0,w,w);});
+const ringTex = canvasTex(256,256,(g,w)=>{const gr=g.createRadialGradient(w/2,w/2,w*.18,w/2,w/2,w/2);gr.addColorStop(0,'rgba(120,200,255,.05)');gr.addColorStop(.72,'rgba(140,210,255,.25)');gr.addColorStop(.86,'rgba(200,240,255,.7)');gr.addColorStop(1,'rgba(200,240,255,0)');g.fillStyle=gr;g.fillRect(0,0,w,w);
+  g.fillStyle='rgba(190,120,255,.5)';g.beginPath();g.arc(w*.46,w*.48,w*.14,0,TAU);g.fill();});
+const cristaeTex = canvasTex(256,64,(g,w,h)=>{g.fillStyle='#e8562a';g.fillRect(0,0,w,h);g.strokeStyle='#ffc070';g.lineWidth=5;
+  for(let x=10;x<w;x+=22){g.beginPath();g.moveTo(x,4);g.bezierCurveTo(x+14,h*.35,x-10,h*.65,x+4,h-4);g.stroke();}});
+cristaeTex.wrapS = THREE.RepeatWrapping;
+const chromTex = canvasTex(256,256,(g,w,h)=>{g.fillStyle='#6a2bb8';g.fillRect(0,0,w,h);for(let i=0;i<900;i++){g.fillStyle=`rgba(${200+R(0,55)|0},${120+R(0,80)|0},255,${R(.05,.3)})`;g.beginPath();g.arc(R(0,w),R(0,h),R(1,5),0,TAU);g.fill();}});
+
+// ---------- the cell ----------
+const cell = new THREE.Group(); scene.add(cell); cell.add(fill);
+const CUT_Z = 0.08;                       // section plane (cell-local)
+const cutPlane = new THREE.Plane(new THREE.Vector3(0,0,-1), CUT_Z); // keeps z < CUT_Z
+const clip = [cutPlane];
+const S = new THREE.Vector3(1.65,1.3,1.35);   // ellipsoid radii
+
+const fresnelMat = (color, power, strength, side) => new THREE.ShaderMaterial({
+  transparent:true, depthWrite:false, side, blending:THREE.AdditiveBlending, clipping:true,
+  uniforms:{c:{value:new THREE.Color(color)},p:{value:power},s:{value:strength}},
+  vertexShader:`#include <clipping_planes_pars_vertex>
+    varying vec3 vN; varying vec3 vV;
+    void main(){ vec4 mvPosition=modelViewMatrix*vec4(position,1.); vN=normalize(normalMatrix*normal); vV=normalize(-mvPosition.xyz);
+      #include <clipping_planes_vertex>
+      gl_Position=projectionMatrix*mvPosition; }`,
+  fragmentShader:`#include <clipping_planes_pars_fragment>
+    uniform vec3 c; uniform float p; uniform float s; varying vec3 vN; varying vec3 vV;
+    void main(){
+#include <clipping_planes_fragment>
+      float f=pow(1.-abs(dot(normalize(vN),vV)),p); gl_FragColor=vec4(c*f*s, f*s); }`
+});
+
+// membrane: glassy shell + fresnel glow, cut by the section plane
+const shellGeo = new THREE.SphereGeometry(1,128,96); shellGeo.scale(S.x,S.y,S.z);
+const membrane = new THREE.Mesh(shellGeo, new THREE.MeshPhysicalMaterial({color:0x6fcfff, roughness:.15, metalness:0, transparent:true, opacity:.16,
+  clearcoat:1, side:THREE.DoubleSide, depthWrite:false, clippingPlanes:clip}));
+membrane.renderOrder = 5; cell.add(membrane);
+const glow = new THREE.Mesh(shellGeo, fresnelMat(0x7fdcff, 2.2, 1.25, THREE.FrontSide)); glow.material.clippingPlanes = clip; glow.renderOrder=6; cell.add(glow);
+const backGlow = new THREE.Mesh(shellGeo, fresnelMat(0x4a7dff, 1.6, .55, THREE.BackSide)); backGlow.material.clippingPlanes = clip; cell.add(backGlow);
+// cytoplasm volume tint (inner shell)
+const cytoGeo = new THREE.SphereGeometry(.97,96,64); cytoGeo.scale(S.x,S.y,S.z);
+cell.add(new THREE.Mesh(cytoGeo, new THREE.MeshStandardMaterial({color:0x1d4d7a, emissive:0x0b2440, transparent:true, opacity:.35, side:THREE.BackSide, clippingPlanes:clip, depthWrite:false})));
+// section cap + glowing membrane rim at the cut
+const capR = Math.sqrt(1-(CUT_Z/S.z)**2);
+const cap = new THREE.Mesh(new THREE.CircleGeometry(1,128), new THREE.MeshStandardMaterial({color:0x4fa8d8, emissive:0x10304d, transparent:true, opacity:.05, depthWrite:false, side:THREE.DoubleSide}));
+cap.scale.set(S.x*capR*.985,S.y*capR*.985,1); cap.position.z = CUT_Z; cell.add(cap);
+const rimMesh = new THREE.Mesh(new THREE.TorusGeometry(1,.012,12,256), new THREE.MeshStandardMaterial({color:0xbff0ff, emissive:0x66d6ff, emissiveIntensity:1.4}));
+rimMesh.scale.set(S.x*capR,S.y*capR,1); rimMesh.position.z = CUT_Z; cell.add(rimMesh);
+const rim2 = rimMesh.clone(); rim2.material = new THREE.MeshStandardMaterial({color:0x9b7bff, emissive:0x6a4dff, emissiveIntensity:1}); rim2.scale.multiplyScalar(.975); cell.add(rim2);
+
+// surface proteins (instanced) on membrane, skipping the cut region
+{
+  const n=1400, geo=new THREE.SphereGeometry(.018,8,6), m=new THREE.InstancedMesh(geo,new THREE.MeshStandardMaterial({color:0xffffff, emissive:0x2a6a90, roughness:.4}),n);
+  const col=[0xff7ab8,0x9df0ff,0xffd36b,0xb48cff], d=new THREE.Object3D(), c=new THREE.Color(); let k=0;
+  while(k<n){ const v=new THREE.Vector3(R(-1,1),R(-1,1),R(-1,1)); if(v.length()>1||v.length()<.1) continue; v.normalize();
+    const p=new THREE.Vector3(v.x*S.x,v.y*S.y,v.z*S.z); if(p.z>CUT_Z-0.02) continue;
+    d.position.copy(p).multiplyScalar(1.005); d.scale.setScalar(R(.6,1.6)); d.updateMatrix(); m.setMatrixAt(k,d.matrix); m.setColorAt(k,c.set(col[k%4])); k++; }
+  cell.add(m);
+}
+
+// nucleus with envelope, pores, nucleolus
+const NUC = new THREE.Vector3(-.25,.12,-.18);
+const nucleus = new THREE.Group(); nucleus.position.copy(NUC); cell.add(nucleus);
+const nucGeo = new THREE.SphereGeometry(.56,96,64);
+nucleus.add(new THREE.Mesh(nucGeo,new THREE.MeshStandardMaterial({color:0x9b4dff, emissive:0x3a0f7a, roughness:.35, side:THREE.DoubleSide, clippingPlanes:clip})));
+const nucIn = new THREE.Mesh(new THREE.SphereGeometry(.53,64,48),new THREE.MeshStandardMaterial({map:chromTex, emissive:0x40108a, emissiveIntensity:.6, roughness:.8, side:THREE.BackSide, clippingPlanes:clip}));
+nucleus.add(nucIn);
+const nucCap = new THREE.Mesh(new THREE.CircleGeometry(1,96), new THREE.MeshStandardMaterial({map:chromTex, color:0xd7b8ff, emissive:0x5a1eb0, emissiveIntensity:.35, roughness:.9, transparent:true, opacity:.5, depthWrite:false}));
+{ const dz = CUT_Z-NUC.z, r=Math.sqrt(.53*.53-dz*dz); nucCap.scale.set(r,r,1); nucCap.position.z=dz-.002; nucleus.add(nucCap); }
+const nucleolus = new THREE.Mesh(new THREE.SphereGeometry(.2,48,32), new THREE.MeshStandardMaterial({color:0xff4fd8, emissive:0x9a1088, emissiveIntensity:.9, roughness:.5, clippingPlanes:clip}));
+nucleolus.position.set(.05,.06,.02); nucleus.add(nucleolus);
+{ const n=220, m=new THREE.InstancedMesh(new THREE.TorusGeometry(.022,.008,6,12),new THREE.MeshStandardMaterial({color:0xe8c8ff, emissive:0x7a40ff, emissiveIntensity:.6, clippingPlanes:clip}),n), d=new THREE.Object3D();
+  for(let i=0;i<n;i++){ const v=new THREE.Vector3(R(-1,1),R(-1,1),R(-1,.2)).normalize().multiplyScalar(.565); d.position.copy(v); d.lookAt(v.clone().multiplyScalar(2)); d.updateMatrix(); m.setMatrixAt(i,d.matrix);} nucleus.add(m); }
+
+// rough ER: stacked curved cisternae around the nucleus, studded with ribosomes
+const rer = new THREE.Group(); rer.position.copy(NUC); cell.add(rer);
+const ribo = [];
+for(let i=0;i<6;i++){
+  const r=.68+i*.075, arc=R(1.6,2.4), start=R(1.6,2.2);
+  const g=new THREE.TorusGeometry(r,.022,8,140,arc); g.scale(1,1,2.6);
+  const m=new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:0x3f7dff, emissive:0x10307a, roughness:.45, clippingPlanes:clip}));
+  m.rotation.set(R(-.3,.3), R(-.3,.3), start); m.position.z = R(-.25,0); rer.add(m);
+  for(let k=0;k<55;k++){ const a=R(0,arc); const p=new THREE.Vector3(Math.cos(a)*r,Math.sin(a)*r,R(-.05,.05)).applyEuler(m.rotation).add(m.position); p.multiplyScalar(1+R(-.03,.03)); ribo.push(p); }
+}
+{ const m=new THREE.InstancedMesh(new THREE.SphereGeometry(.011,6,4),new THREE.MeshStandardMaterial({color:0x9ff7ff, emissive:0x2ad0ff, emissiveIntensity:.8, clippingPlanes:clip}),ribo.length), d=new THREE.Object3D();
+  ribo.forEach((p,i)=>{d.position.copy(p);d.updateMatrix();m.setMatrixAt(i,d.matrix);}); rer.add(m); }
+
+// smooth ER: tubular network
+const SER = new THREE.Vector3(-.95,-.55,-.25);
+const ser = new THREE.Group(); cell.add(ser);
+for(let i=0;i<9;i++){ const pts=[]; let p=SER.clone().add(new THREE.Vector3(R(-.25,.25),R(-.2,.2),R(-.35,0)));
+  for(let k=0;k<6;k++){ pts.push(p.clone()); p.add(new THREE.Vector3(R(-.16,.16),R(-.16,.16),R(-.1,.08))); }
+  ser.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),60,.028,10,false), new THREE.MeshStandardMaterial({color:0x2fe0b0, emissive:0x0c6a50, roughness:.35, clippingPlanes:clip}))); }
+
+// Golgi apparatus: stack of curved flattened cisternae
+const GOL = new THREE.Vector3(.72,-.5,-.25);
+const golgi = new THREE.Group(); golgi.position.copy(GOL); golgi.rotation.set(.3,-.4,.9); cell.add(golgi);
+const golCols=[0xffe066,0xffc94a,0xffa43a,0xb8f060,0x8fe36a];
+for(let i=0;i<5;i++){ const g=new THREE.TorusGeometry(.32-i*.03,.03,10,90,2.2); g.scale(1,1,2.2);
+  const m=new THREE.Mesh(g,new THREE.MeshStandardMaterial({color:golCols[i], emissive:golCols[i], emissiveIntensity:.25, roughness:.35, clippingPlanes:clip}));
+  m.position.y = i*.075; m.rotation.z = .5; golgi.add(m); }
+
+// mitochondria
+const mitos=[]; const mitoSpots=[[.95,.35,-.2],[1.05,-.05,-.55],[-.05,-.8,-.35],[.25,.75,-.55],[-1.1,.25,-.45],[.55,.0,-.75],[-.6,.75,-.5],[1.2,.55,-.6]];
+const MITO = new THREE.Vector3(...mitoSpots[0]);
+mitoSpots.forEach((s,i)=>{ const g=new THREE.CapsuleGeometry(.075,.26,8,24); const tex=cristaeTex.clone(); tex.needsUpdate=true; tex.repeat.set(1,1);
+  const m=new THREE.Mesh(g,new THREE.MeshStandardMaterial({map:tex, emissive:0x7a1e05, emissiveIntensity:.5, roughness:.4, clippingPlanes:clip}));
+  m.position.set(...s); m.rotation.set(R(0,3),R(0,3),R(0,3)); m.userData.base=m.rotation.clone(); cell.add(m); mitos.push(m); });
+
+// lysosomes, peroxisome-ish vesicles
+const LYSO = new THREE.Vector3(.2,-.25,-.15);
+const lysos=[[.2,-.25,-.15],[-.6,-.35,-.1],[.95,-.45,-.6],[-.3,-.85,-.55]].map((p,i)=>{const m=new THREE.Mesh(new THREE.SphereGeometry(i?.07:.09,32,24),new THREE.MeshStandardMaterial({color:0xff5f9e, emissive:0x8a1048, emissiveIntensity:.7, roughness:.3, clippingPlanes:clip})); m.position.set(...p); cell.add(m); return m;});
+const VES = new THREE.Vector3(.5,-.15,-.05);
+const vesicles=[]; for(let i=0;i<46;i++){ const m=new THREE.Mesh(new THREE.SphereGeometry(R(.018,.035),16,12),new THREE.MeshStandardMaterial({color:i%3?0xffe27a:0x8ff0ff, emissive:i%3?0x8a6a00:0x0a7090, emissiveIntensity:.9, clippingPlanes:clip}));
+  m.userData={a:R(0,TAU), f:1+(i%4), path:i%3}; cell.add(m); vesicles.push(m); }
+
+// centrosome + microtubules
+const CEN = new THREE.Vector3(.35,.62,-.25);
+const cen = new THREE.Group(); cen.position.copy(CEN); cell.add(cen);
+for(let j=0;j<2;j++){ const c=new THREE.Group(); for(let k=0;k<9;k++){ const tb=new THREE.Mesh(new THREE.CylinderGeometry(.012,.012,.17,8),new THREE.MeshStandardMaterial({color:0x9ff3ff, emissive:0x2ad0ff, emissiveIntensity:.8, clippingPlanes:clip})); const a=k/9*TAU; tb.position.set(Math.cos(a)*.045,0,Math.sin(a)*.045); c.add(tb);} if(j) c.rotation.z=Math.PI/2, c.position.x=.1; cen.add(c);}
+const tubules=[]; for(let i=0;i<26;i++){ const dir=new THREE.Vector3(R(-1,1),R(-1,1),R(-1,.1)).normalize(); const end=new THREE.Vector3(dir.x*S.x,dir.y*S.y,dir.z*S.z).multiplyScalar(.93);
+  const mid=CEN.clone().lerp(end,.5).add(new THREE.Vector3(R(-.1,.1),R(-.1,.1),R(-.1,.1)));
+  const curve=new THREE.QuadraticBezierCurve3(CEN.clone(),mid,end); tubules.push(curve);
+  cell.add(new THREE.Mesh(new THREE.TubeGeometry(curve,40,.004,5,false),new THREE.MeshBasicMaterial({color:0x7fdcff, transparent:true, opacity:.35, clippingPlanes:clip}))); }
+// motor proteins riding microtubules
+const motors = tubules.slice(0,14).map((c,i)=>{const m=new THREE.Mesh(new THREE.SphereGeometry(.016,10,8),new THREE.MeshBasicMaterial({color:0xfff0a0})); m.userData={c,ph:R(0,1),f:2+(i%3)}; cell.add(m); return m;});
+
+// free ribosomes / cytosol granules
+{ const n=900, m=new THREE.InstancedMesh(new THREE.SphereGeometry(.008,5,4),new THREE.MeshBasicMaterial({color:0x8fd0ff, transparent:true, opacity:.55}),n), d=new THREE.Object3D(); let k=0;
+  while(k<n){ const p=new THREE.Vector3(R(-1,1)*S.x,R(-1,1)*S.y,R(-1,CUT_Z/S.z)*S.z); if((p.x/S.x)**2+(p.y/S.y)**2+(p.z/S.z)**2>.9) continue; if(p.distanceTo(NUC)<.6) continue; d.position.copy(p); d.updateMatrix(); m.setMatrixAt(k++,d.matrix);} cell.add(m); }
+
+// ATP sparks near mitochondria (glow sprites)
+const sparks=[]; for(let i=0;i<60;i++){ const s=new THREE.Sprite(new THREE.SpriteMaterial({map:blobTex,color:0xffd27a,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false}));
+  s.userData={m:mitos[i%mitos.length],dir:new THREE.Vector3(R(-1,1),R(-1,1),R(-1,1)).normalize(),ph:R(0,1),f:3+(i%4)}; cell.add(s); sparks.push(s);}
+
+// ---------- background: parallax layers of out-of-focus cells ----------
+const bg=[]; const bgCols=[0x2a7dff,0x7a4dff,0x23c4d8,0x3b5cff];
+for(let i=0;i<26;i++){ const layer=i<10?0:i<20?1:2; const z=[-9,-16,-28][layer];
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:ringTex,color:bgCols[i%4],transparent:true,opacity:[.32,.2,.12][layer],depthWrite:false,fog:false}));
+  const sc=[2.6,3.6,5][layer]*R(.7,1.3); s.scale.set(sc,sc*R(.8,1),1);
+  s.userData={base:new THREE.Vector3(R(-1,1)*[6,9,16][layer],R(-1,1)*[7,11,19][layer],z),layer,ph:R(0,TAU)}; scene.add(s); bg.push(s); }
+const dust=[]; for(let i=0;i<120;i++){ const s=new THREE.Sprite(new THREE.SpriteMaterial({map:blobTex,color:0x9fdcff,transparent:true,opacity:R(.1,.45),blending:THREE.AdditiveBlending,depthWrite:false}));
+  s.scale.setScalar(R(.02,.07)); s.userData={base:new THREE.Vector3(R(-5,5),R(-6,6),R(-6,3)),ph:R(0,TAU),f:1+(i%3)}; scene.add(s); dust.push(s);}
+
+// ---------- post ----------
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene,camera));
+const bloom=new UnrealBloomPass(new THREE.Vector2(W/2,H/2), .55, .55, .62); composer.addPass(bloom);
+composer.addPass(new OutputPass());
+
+// ---------- story ----------
+// stops: [time, local target, local camera offset direction, distance, name]
+const L = (x,y,z)=>new THREE.Vector3(x,y,z);
+const STOPS = [
+  {id:'nucleus',   t:[3.2,5.6],  at:NUC.clone().add(L(0,0,.2)), dir:L(-.25,.15,1), dist:4.02, mag:'×6 400',  name:'NUCLEUS', desc:'Double membrane, nuclear pores.\nHouses ~2 m of DNA as chromatin.', anchor:NUC.clone().add(L(-.35,.33,.25))},
+  {id:'nucleolus', t:[6.4,8.4],  at:NUC.clone().add(L(.05,.06,.05)), dir:L(.1,.2,1), dist:1.95, mag:'×18 000', name:'NUCLEOLUS', desc:'rRNA transcription and\nribosome subunit assembly.', anchor:NUC.clone().add(L(.12,.16,.12))},
+  {id:'rer',       t:[9.2,11.2], at:NUC.clone().add(L(-.55,.45,-.05)), dir:L(-.4,.3,1), dist:2.30, mag:'×12 000', name:'ROUGH ER', desc:'Ribosome-studded cisternae.\nFolds secreted proteins.', anchor:NUC.clone().add(L(-.6,.48,-.05))},
+  {id:'golgi',     t:[12.0,14.0],at:GOL.clone(), dir:L(.35,-.2,1), dist:2.30, mag:'×14 000', name:'GOLGI APPARATUS', desc:'cis → trans stack. Tags and\nsorts cargo into vesicles.', anchor:GOL.clone().add(L(.05,.12,.08))},
+  {id:'ser',       t:[14.8,16.6],at:SER.clone(), dir:L(-.4,-.3,1), dist:2.42, mag:'×11 000', name:'SMOOTH ER', desc:'Tubular network. Lipid\nsynthesis, Ca²⁺ storage.', anchor:SER.clone().add(L(.1,.05,0))},
+  {id:'mito',      t:[17.4,19.4],at:MITO.clone(), dir:L(.4,.1,1), dist:1.72, mag:'×22 000', name:'MITOCHONDRION', desc:'Cristae host the electron\ntransport chain. ATP output.', anchor:MITO.clone()},
+  {id:'vesicles',  t:[20.0,21.4],at:VES.clone(), dir:L(.2,-.1,1), dist:1.95, mag:'×20 000', name:'VESICLES', desc:'Cargo shuttles ER → Golgi\n→ plasma membrane.', anchor:VES.clone().add(L(.06,-.04,0))},
+  {id:'lyso',      t:[22.0,23.2],at:LYSO.clone(), dir:L(-.2,-.2,1), dist:1.72, mag:'×24 000', name:'LYSOSOME', desc:'Acidic lumen, pH ~4.7.\nRecycles worn components.', anchor:LYSO.clone()},
+  {id:'centro',    t:[23.8,25.0],at:CEN.clone(), dir:L(.1,.35,1), dist:1.84, mag:'×26 000', name:'CENTROSOME', desc:'Paired centrioles nucleate\nthe microtubule network.', anchor:CEN.clone()},
+  {id:'membrane',  t:[25.6,26.6],at:L(1.25,.62,-.1), dir:L(1,.6,.7), dist:1.84, mag:'×16 000', name:'PLASMA MEMBRANE', desc:'Lipid bilayer with embedded\nproteins. Gatekeeper of the cell.', anchor:L(S.x*.72,S.y*.62,0)},
+];
+const OVER_LABELS = [
+  ['NUCLEUS', NUC.clone().add(L(-.35,.33,.25)), [-1,-1]],
+  ['ROUGH ER', NUC.clone().add(L(-.6,.48,-.05)), [-1,-1]],
+  ['MITOCHONDRION', MITO.clone(), [1,-1]],
+  ['GOLGI APPARATUS', GOL.clone().add(L(.05,.12,.08)), [1,1]],
+  ['LYSOSOME', LYSO.clone(), [1,1]],
+  ['CENTROSOME', CEN.clone(), [1,-1]],
+  ['PLASMA MEMBRANE', L(-S.x*.6,-S.y*.75,0), [-1,1]],
+];
+const OVER_DIST = 8.6;
+
+// rotation: periodic angular velocity -> one full turn per loop, fast through the seam, a slow sway during the tour
+const VT = (()=>{ const N=3000, v=[]; let sum=0; for(let i=0;i<N;i++){ const u=i/N; const w=Math.min(u,1-u)*LOOP; const sp=Math.exp(-(w*w)/(2*1.05*1.05)); const val=.02+sp; v.push(val); sum+=val; }
+  const cum=[0]; let acc=0; for(let i=0;i<N;i++){acc+=v[i]/sum; cum.push(acc);} return cum; })();
+const turn = t => { const u=((t%LOOP)+LOOP)%LOOP/LOOP*3000; const i=Math.floor(u), f=u-i; return lp(VT[i],VT[Math.min(i+1,3000)],f); };
+// angle 0 = section facing camera. t=0 -> back (π).
+const cellAngle = t => Math.PI + TAU*turn(t);
+
+function tourWeight(t){ return smooth((t-1.6)/1.6) * (1-smooth((t-26.6)/1.6)); }
+function camLocal(t){
+  // piecewise: travel between stops with smoothstep easing
+  const pts=[{t:[0,1.6],at:L(0,0,0),dir:L(0,0,1),dist:OVER_DIST}, ...STOPS, {t:[28.2,30],at:L(0,0,0),dir:L(0,0,1),dist:OVER_DIST}];
+  for(let i=0;i<pts.length;i++){
+    const a=pts[i], b=pts[i+1];
+    if(t>=a.t[0] && t<=a.t[1]){ const k=(t-a.t[0])/(a.t[1]-a.t[0]); return {at:a.at.clone().add(L(.02*Math.sin(k*3),.015*Math.cos(k*2),0)), dir:a.dir.clone().normalize(), dist:a.dist*(1-.06*k), stop:a.name?a:null}; }
+    if(b && t>a.t[1] && t<b.t[0]){ const k=smooth((t-a.t[1])/(b.t[0]-a.t[1]));
+      const d=lp(a.dist*.94,b.dist,k) + Math.sin(k*Math.PI)*Math.min(.9, a.at.distanceTo(b.at)*.9);
+      return {at:a.at.clone().lerp(b.at,k), dir:a.dir.clone().normalize().lerp(b.dir.clone().normalize(),k).normalize(), dist:d, stop:null, move:Math.sin(k*Math.PI)}; }
+  }
+  return {at:L(0,0,0),dir:L(0,0,1),dist:OVER_DIST};
+}
+
+// ---------- overlay ----------
+const fx = document.getElementById('fx').getContext('2d');
+const project = (vLocal) => { const v=vLocal.clone().applyMatrix4(cell.matrixWorld); const c=v.clone().project(camera); return {x:(c.x*.5+.5)*W, y:(-c.y*.5+.5)*H, z:c.z, behind:v.clone().sub(camera.position).dot(camera.getWorldDirection(new THREE.Vector3()))<0}; };
+function drawLabel(text, p, side, prog, alpha){
+  if(alpha<=0.01 || p.behind) return;
+  const len=110, ex=p.x+side[0]*len*.55, ey=p.y+side[1]*len*.55, tx=ex+side[0]*70;
+  fx.save(); fx.globalAlpha=alpha;
+  // anchor dot
+  fx.fillStyle='#bff2ff'; fx.shadowColor='#55d4ff'; fx.shadowBlur=12; fx.beginPath(); fx.arc(p.x,p.y,4,0,TAU); fx.fill();
+  fx.strokeStyle='rgba(190,240,255,.9)'; fx.lineWidth=1.6; fx.setLineDash([6,5]);
+  const k1=Math.min(1,prog*2), k2=Math.max(0,Math.min(1,prog*2-1));
+  fx.beginPath(); fx.moveTo(p.x,p.y); fx.lineTo(lp(p.x,ex,k1),lp(p.y,ey,k1)); if(k2>0) fx.lineTo(lp(ex,tx,k2),ey); fx.stroke(); fx.setLineDash([]);
+  if(prog>.75){ const a=(prog-.75)/.25; fx.globalAlpha=alpha*a; fx.font='700 19px Barlow'; const w=fx.measureText(text).width+20;
+    const bx = side[0]>0 ? tx : tx-w, by=ey-15;
+    fx.shadowBlur=18; fx.fillStyle='rgba(6,22,40,.82)'; fx.strokeStyle='rgba(140,220,255,.75)'; fx.lineWidth=1.2;
+    fx.beginPath(); fx.roundRect(bx,by,w,30,6); fx.fill(); fx.stroke(); fx.shadowBlur=8; fx.fillStyle='#e9fbff'; fx.fillText(text,bx+10,by+21); }
+  fx.restore();
+}
+function drawFrameDecor(t){
+  // viewport corner brackets
+  fx.save(); fx.strokeStyle='rgba(140,215,255,.55)'; fx.lineWidth=2; const x0=40,y0=258,x1=1040,y1=1050,c=26;
+  [[x0,y0,1,1],[x1,y0,-1,1],[x0,y1,1,-1],[x1,y1,-1,-1]].forEach(([x,y,sx,sy])=>{fx.beginPath();fx.moveTo(x+sx*c,y);fx.lineTo(x,y);fx.lineTo(x,y+sy*c);fx.stroke();});
+  // scale bar in viewport
+  fx.restore();
+}
+
+// ---------- HUD ----------
+const $ = id => document.getElementById(id);
+const spark = $('spark').getContext('2d'), mini=$('mini').getContext('2d'), scl=$('scale').getContext('2d');
+const BARS=[['Transcription',0x9b4dff],['Translation',0x3f7dff],['Glycolysis',0xff6fa8],['OXPHOS',0xffa43a],['Vesicle traffic',0xffe066],['Proteolysis',0xb8f060]];
+$('bars').innerHTML = BARS.map((b,i)=>`<div class="row"><span style="width:92px">${b[0]}</span><div class="bar"><i id="b${i}" style="background:#${b[1].toString(16).padStart(6,'0')};box-shadow:0 0 8px #${b[1].toString(16).padStart(6,'0')}"></i></div><span id="bv${i}" style="width:34px;text-align:right;color:var(--ink)">0%</span></div>`).join('')
+  + `<div class="k" style="margin-top:10px">Protein synthesis</div><div><span class="big" style="font-size:34px" id="ps">1.22</span><span class="unit">× 10⁶ /min</span></div>`;
+const LOGS=['ATP synthase · 3 ATP / turn','mRNA export · nuclear pore','SRP docking · rough ER','cis-Golgi · cargo received','kinesin step · 8 nm','lysosome fusion · pH 4.7','Ca²⁺ pulse · smooth ER','cristae · ΔΨ −180 mV','rRNA processed · nucleolus','vesicle budding · trans-Golgi','dynein return · minus end','glucose uptake · GLUT1'];
+
+function hud(t, cl){
+  const atp = 1.0 + .06*wave(t,3) + .03*wave(t,7,1);
+  $('atp').textContent = atp.toFixed(2);
+  $('vm').textContent = '−' + (70+2*wave(t,5)).toFixed(1) + ' mV';
+  $('prot').textContent = '~' + (10000 + Math.round(120*wave(t,2))).toLocaleString('en').replace(',', ' ');
+  // spark line scrolls with integer frequency
+  spark.clearRect(0,0,252,70); spark.strokeStyle='rgba(255,180,71,.9)'; spark.lineWidth=2; spark.shadowColor='#ffb347'; spark.shadowBlur=8; spark.beginPath();
+  for(let x=0;x<=252;x+=3){ const tt=t - (252-x)/252*6; const y=35-22*(.6*wave(tt,3)+.3*wave(tt,7,1)+.1*wave(tt,13,2)); x?spark.lineTo(x,y):spark.moveTo(x,y);} spark.stroke();
+  spark.shadowBlur=0; spark.fillStyle='rgba(255,180,71,.12)'; spark.lineTo(252,70); spark.lineTo(0,70); spark.fill();
+  BARS.forEach((b,i)=>{ const v=Math.round(48+30*wave(t,1+i,i)+12*wave(t,4+i,i*2)); $('b'+i).style.width=v+'%'; $('bv'+i).textContent=v+'%'; });
+  $('ps').textContent=(1.22+.08*wave(t,4)).toFixed(2);
+  const vit=[['pH cytosol',(7.2+.03*wave(t,2)).toFixed(2)],['Ca²⁺ free',(100+8*wave(t,6)).toFixed(0)+' nM'],['O₂ uptake',(.29+.02*wave(t,3)).toFixed(2)+' fmol/s'],['Temp','37.0 °C']];
+  $('vitals').innerHTML=vit.map(v=>`<div class="row"><span>${v[0]}</span><span>${v[1]}</span></div>`).join('');
+  const off=Math.floor(t*2); $('log').innerHTML=Array.from({length:7},(_,i)=>{const n=((off-i)%LOGS.length+LOGS.length)%LOGS.length; const s=((t*2-i)/2+LOOP)%LOOP; return `<div>${s.toFixed(1).padStart(4,'0')}s  ${LOGS[n]}</div>`;}).join('');
+  // focus
+  const st=cl.stop; const w=tourWeight(t);
+  $('mag').textContent = st? st.mag : (cl.move!==undefined && w>.5 ? '×' + Math.round(4000+cl.move*6000).toLocaleString('en').replace(',',' ') : '×1 300');
+  $('fname').textContent = st? st.name : (w>.5?'IN TRANSIT':'WHOLE CELL');
+  $('fdesc').innerHTML = (st? st.desc : 'One cell, ~20 µm across.\nCut open along the midplane.').replace('\n','<br>');
+  $('viewname').textContent = st? st.name : (w>.5?'FLY-THROUGH':'OVERVIEW');
+  $('seq').textContent = st? 'whole cell › '+st.name.toLowerCase() : 'whole cell';
+  // scale bar length follows zoom
+  const um = st? (st.dist<.9?0.5:1) : 2; const px = 40 + 140*(OVER_DIST/(st?st.dist:Math.max(1,camera.position.length())))*(um/2)/3.2;
+  scl.clearRect(0,0,300,34); scl.strokeStyle='#bff2ff'; scl.lineWidth=2; scl.beginPath(); scl.moveTo(4,14); scl.lineTo(4+Math.min(px,250),14); scl.moveTo(4,8); scl.lineTo(4,20); scl.moveTo(4+Math.min(px,250),8); scl.lineTo(4+Math.min(px,250),20); scl.stroke();
+  scl.fillStyle='#a9c3d6'; scl.font='400 12px Plex'; scl.fillText(um+' µm',8+Math.min(px,250)+6,19);
+  // locator minimap: cell outline + camera frustum dot
+  mini.clearRect(0,0,176,150); mini.save(); mini.translate(88,75);
+  mini.strokeStyle='rgba(127,227,255,.7)'; mini.lineWidth=1.5; mini.beginPath(); mini.ellipse(0,0,70,55,0,0,TAU); mini.stroke();
+  mini.fillStyle='rgba(155,77,255,.55)'; mini.beginPath(); mini.arc(NUC.x*42,-NUC.y*42,.56*42,0,TAU); mini.fill();
+  [[GOL,'#ffe066'],[MITO,'#ff7a3a'],[SER,'#2fe0b0'],[LYSO,'#ff5f9e'],[CEN,'#9ff3ff']].forEach(([p,c])=>{mini.fillStyle=c; mini.beginPath(); mini.arc(p.x*42,-p.y*42,4,0,TAU); mini.fill();});
+  const tgt=cl.at, r=Math.max(8, Math.min(60, cl.dist*8));
+  mini.strokeStyle='#ffb347'; mini.lineWidth=2; mini.strokeRect(tgt.x*42-r/2,-tgt.y*42-r/2*1.25,r,r*1.25);
+  mini.restore();
+}
+
+// ---------- frame ----------
+function renderAt(t){
+  t = ((t%LOOP)+LOOP)%LOOP;
+  cell.rotation.set(.12*Math.sin(TAU*t/LOOP)+.18, cellAngle(t), .05*Math.sin(TAU*2*t/LOOP));
+  cell.updateMatrixWorld(true);
+  // clipping plane in world space
+  cutPlane.normal.set(0,0,-1); cutPlane.constant=CUT_Z; cutPlane.applyMatrix4(cell.matrixWorld);
+
+  // living micro-motion
+  nucleus.scale.setScalar(1+.008*wave(t,6)); nucleolus.position.y=.06+.01*wave(t,5);
+  rer.rotation.z=.01*wave(t,3); golgi.rotation.y=-.4+.03*wave(t,2);
+  mitos.forEach((m,i)=>{ m.rotation.x=m.userData.base.x+.06*wave(t,1+i%3,i); m.rotation.y=m.userData.base.y+.04*wave(t,2,i); m.material.map.offset.x=(t/LOOP)*(1+i%2); });
+  vesicles.forEach((v,i)=>{ const u=v.userData; const k=((t*u.f/LOOP)+u.a/TAU)%1;
+    const paths=[[SER,GOL],[GOL,L(1.3,-.6,-.1)],[NUC.clone().add(L(.6,-.2,0)),GOL]]; const [a,b]=paths[u.path];
+    v.position.copy(a).lerp(b,k).add(L(.12*Math.sin(u.a+k*TAU),.1*Math.cos(u.a*2+k*TAU),.08*Math.sin(u.a*3))); });
+  motors.forEach(m=>{ const u=m.userData; m.position.copy(u.c.getPoint((u.ph+t*u.f/LOOP)%1)); });
+  sparks.forEach(s=>{ const u=s.userData; const k=(u.ph+t*u.f/LOOP)%1; s.position.copy(u.m.position).addScaledVector(u.dir,.08+k*.25); s.material.opacity=Math.sin(k*Math.PI)*.9; s.scale.setScalar(.05*(1-k)+.015); });
+
+  // camera
+  const cl = camLocal(t), w = tourWeight(t);
+  const camL = cl.at.clone().addScaledVector(cl.dir, cl.dist);
+  const camW = camL.clone().applyMatrix4(cell.matrixWorld), tgtW = cl.at.clone().applyMatrix4(cell.matrixWorld);
+  const overPos = L(0,.15,OVER_DIST), overTgt=L(0,0,0);
+  camera.position.copy(overPos).lerp(camW,w); const tgt=overTgt.clone().lerp(tgtW,w);
+  camera.up.set(0,1,0); camera.lookAt(tgt); camera.updateMatrixWorld();
+
+  // parallax background
+  bg.forEach(s=>{ const u=s.userData; const par=[.25,.12,.05][u.layer];
+    s.position.copy(u.base).addScaledVector(camera.position,1-par).add(L(.2*Math.sin(TAU*t/LOOP+u.ph),.15*Math.cos(TAU*t/LOOP+u.ph),0)); });
+  dust.forEach(s=>{ const u=s.userData; s.position.copy(u.base).add(L(.15*Math.sin(TAU*u.f*t/LOOP+u.ph),.15*Math.cos(TAU*u.f*t/LOOP+u.ph),0)); });
+
+  bloom.strength=lp(.55,.28,w); bloom.threshold=lp(.62,.78,w); glow.material.uniforms.s.value=lp(1.25,.6,w);
+  composer.render();
+
+  // labels
+  fx.clearRect(0,0,W,H); drawFrameDecor(t);
+  const ov = 1-w;
+  OVER_LABELS.forEach(([name,p,side],i)=>{ // draw on after the turn lands, fade before leaving
+    const start=.9+i*.08, prog=smooth((t-start)/.6), fade=Math.min(1-smooth((t-2.4)/.5), 1) ;
+    const prog2=smooth((t-(27.6+i*.08))/.6), fade2=1-smooth((t-29.2)/.4);
+    const a = t<15 ? Math.min(prog,fade) : Math.min(prog2,fade2);
+    drawLabel(name, project(p), side, t<15?prog:prog2, a*Math.max(ov,0));
+  });
+  STOPS.forEach(st=>{ const [a,b]=st.t; const prog=smooth((t-a)/.5); const fade=1-smooth((t-(b-.25))/.3);
+    if(t>a-.1 && t<b+.1) drawLabel(st.name, project(st.anchor), [1,-1], prog, Math.min(prog*1.5,fade)); });
+
+  hud(t, cl);
+}
+window.renderAt = renderAt; window.LOOP = LOOP;
+document.fonts.ready.then(()=>{ renderAt(0); window.ready = true; });
+// ---------- interactive demo controls ----------
+const fit=()=>document.body.style.setProperty('--k', Math.min(innerWidth/1100, innerHeight/1370));
+addEventListener('resize',fit); fit();
+let T=0, playing=!matchMedia('(prefers-reduced-motion: reduce)').matches, last=performance.now(), target=null;
+const playBtn=$('play'), scrub=$('scrub'), clock=$('clock'), stopsEl=$('stops');
+const jumps=[{name:'Whole cell',t:2.2},...STOPS.map(s=>({name:s.name.charAt(0)+s.name.slice(1).toLowerCase().replace(' er',' ER'),t:(s.t[0]+s.t[1])/2}))];
+stopsEl.innerHTML=jumps.map((j,i)=>`<button data-i="${i}">${j.name}</button>`).join('');
+stopsEl.addEventListener('click',e=>{const b=e.target.closest('button'); if(!b) return; target=jumps[+b.dataset.i].t; });
+const setPlay=p=>{playing=p; playBtn.textContent=p?'❚❚':'▶'; playBtn.setAttribute('aria-label',p?'Pause':'Play');};
+playBtn.onclick=()=>{target=null; setPlay(!playing);}; setPlay(playing);
+scrub.oninput=()=>{target=null; T=+scrub.value; setPlay(false);};
+addEventListener('keydown',e=>{ if(e.code==='Space'&&e.target.tagName!=='BUTTON'){e.preventDefault(); playBtn.click();}
+  if(e.code==='ArrowRight'){T=(T+1)%LOOP;} if(e.code==='ArrowLeft'){T=(T-1+LOOP)%LOOP;} });
+function frame(now){
+  const dt=Math.min(.1,(now-last)/1000); last=now;
+  if(target!==null){ // glide along the timeline to the chosen stop
+    let d=target-T; if(d<0) d+=LOOP; const step=Math.min(d, Math.max(1.2, d*3)*dt*2.2);
+    T=(T+step)%LOOP; if(d-step<.02){T=target; target=null; setPlay(false);} }
+  else if(playing) T=(T+dt)%LOOP;
+  renderAt(T); scrub.value=T; clock.textContent=T.toFixed(1).padStart(4,'0')+' s';
+  const cur=STOPS.findIndex(s=>T>=s.t[0]-.2&&T<=s.t[1]+.2);
+  stopsEl.querySelectorAll('button').forEach((b,i)=>b.classList.toggle('on', cur>=0? i===cur+1 : (i===0&&tourWeight(T)<.5)));
+  requestAnimationFrame(frame);
+}
+document.fonts.ready.then(()=>requestAnimationFrame(frame));
+</script>
+</body>
+</html>

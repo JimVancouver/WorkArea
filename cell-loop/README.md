@@ -33,3 +33,7 @@ Replace `@yourhandle` in `index.html` with your own handle.
 | 23.8 | Centrosome |
 | 25.6 | Plasma membrane |
 | 27–30 | Pull out, overview labels, spin to the back (= frame 1) |
+
+## Interactive demo
+
+`demo/` is a standalone version with play/pause, a timeline scrubber, and buttons that fly to each organelle. Serve the folder and open `demo/index.html`. Space toggles play; the arrow keys step one second.
